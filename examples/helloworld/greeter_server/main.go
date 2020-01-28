@@ -25,13 +25,14 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )
 
 const (
-	port = ":50051"
+	port = ":8080"
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -42,7 +43,8 @@ type server struct {
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received: %v", in.GetName())
-	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
+	cluster := os.Getenv("CLUSTER_NAME")
+	return &pb.HelloReply{Message: "Hello from " + cluster + " " + in.GetName()}, nil
 }
 
 func main() {
@@ -50,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+	log.Printf("Listening for GRPC connections on port %v", port)
 	s := grpc.NewServer()
 	pb.RegisterGreeterServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
